@@ -1,5 +1,5 @@
 package = "kong-log-google"
-version = "1.4-5"
+version = "1.4-6"
 
 source = {
   url = "git://github.com/yesinteractive/kong-log-google.git"
@@ -17,7 +17,7 @@ dependencies = {
 build = {
   type = "builtin",
   modules = {
-    ["kong.plugins.log-google.handler"] = "src/handler.lua",
-    ["kong.plugins.log-google.schema"] = "src/schema.lua",
+    ["kong.plugins.log-google.handler"] = "plugin/handler.lua",
+    ["kong.plugins.log-google.schema"] = "plugin/schema.lua",
   }
 }
