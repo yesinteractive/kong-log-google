@@ -1,0 +1,155 @@
+local BasePlugin = require "kong.plugins.base_plugin"
+local basic_serializer = require "kong.plugins.log-serializers.basic"
+-- this codes just runs a simple echo function modeled from https://www.jerney.io/header-echo-kong-plugin/
+-- another good source for plugin templating is https://github.com/Kong/kong-plugin
+
+local myHandler = BasePlugin:extend()
+local http = require "resty.http"
+local cjson = require "cjson"
+local url = require "socket.url"
+
+myHandler.PRIORITY = 12
+myHandler.VERSION = "0.1.12"
+
+function myHandler:new()
+--  myHandler.super.new(self, "log-google")
+  self.echo_string = ""
+end
+
+local function send_payload(self, conf)
+      --make request to google analytics
+local httpc = http.new()
+
+   local ok, err = httpc:connect("www.google-analytics.com", 443)
+  if not ok then
+    kong.log.err("failed to connect to google analytics"..err)
+  end
+  
+  
+      local _, err = httpc:ssl_handshake(true, "www.google-analytics.com", false)
+    if err then
+    kong.log.err("failed to do ssl handshake"..err)
+      return
+    end
+
+
+
+
+  local res, err = httpc:request({
+    method = "POST",
+    path = "/collect",
+        body = "v=1&t=pageview&tid="..conf.tid.."&cid="..conf.tid.."&dp="..kong.request.get_path().."&ua="..kong.request.get_header("Host").."&uip="..kong.client.get_ip(),
+        headers = {
+          ["Content-Type"] = "application/x-www-form-urlencoded",
+        },
+  })
+        if not res then
+        kong.log.err("google log failed to request: ", err)
+        kong.log.debug("google analytics request: ",  body)
+        return
+      else
+        kong.log.debug("google analytics request: ",  body)
+         kong.log.debug("google analytics response: ", res.body)
+      end
+end
+
+-- Run this in the log_by_lua_block after performing proxy functions
+function myHandler:log(conf)
+ -- myHandler.super.log(self)
+
+
+return send_payload(self,conf)
+
+  
+
+  
+end
+
+
+
+-- Run this when the response header has been received
+-- from the upstream service
+function myHandler:header_filter(conf)
+--do nothing
+end
+
+
+function myHandler:body_filter(conf)
+
+ -- return kong.response.exit(403, "Access Forbidden")
+
+end
+
+
+
+
+
+---------------------------------------------------------------------------------------------
+-- In the code below, just remove the opening brackets; `[[` to enable a specific handler
+--
+-- The handlers are based on the OpenResty handlers, see the OpenResty docs for details
+-- on when exactly they are invoked and what limitations each handler has.
+---------------------------------------------------------------------------------------------
+
+--[[ loading-config
+starting-worker
+rewrite
+content
+rewrite tail
+access tail
+output-header-filter
+output-body-filter
+log --]]
+
+--[[ handles more initialization, but AFTER the worker process has been forked/created.
+-- It runs in the 'init_worker_by_lua_block'
+function plugin:init_worker()
+  -- your custom code here
+end --]]
+
+
+--[[ runs in the ssl_certificate_by_lua_block handler
+function plugin:certificate(plugin_conf)
+  -- your custom code here
+end --]]
+
+
+--[[ runs in the 'rewrite_by_lua_block'
+-- IMPORTANT: during the `rewrite` phase neither the `api` nor the `consumer` will have
+-- been identified, hence this handler will only be executed if the plugin is
+-- configured as a global plugin!
+function plugin:rewrite(plugin_conf)
+  -- your custom code here
+end --]]
+
+
+---[[ runs in the 'access_by_lua_block'
+--function plugin:access(plugin_conf)
+
+  -- your custom code here
+--  ngx.req.set_header("Hello-World", "this is on a request")
+
+--end --]]
+
+
+---[[ runs in the 'header_filter_by_lua_block'
+--function plugin:header_filter(plugin_conf)
+
+  -- your custom code here, for example;
+ -- ngx.header["Bye-World"] = "this is on the response"
+
+--end --]]
+
+
+--[[ runs in the 'body_filter_by_lua_block'
+function plugin:body_filter(plugin_conf)
+  -- your custom code here
+end --]]
+
+
+--[[ runs in the 'log_by_lua_block'
+function plugin:log(plugin_conf)
+  -- your custom code here
+end --]]
+
+return myHandler
