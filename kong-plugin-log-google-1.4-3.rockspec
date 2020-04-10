@@ -1,5 +1,5 @@
 package = "kong-log-google"
-version = "1.4-2"
+version = "1.4-3"
 
 source = {
   url = "https://github.com/yesinteractive/kong-log-google.git"
