@@ -2,7 +2,7 @@ package = "kong-log-google"
 version = "1.4-5"
 
 source = {
-  url = "git://github.com/yesinteractive/kong-log-google"
+  url = "git://github.com/yesinteractive/kong-log-google.git"
 }
 
 description = {
