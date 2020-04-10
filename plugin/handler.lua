@@ -1,3 +1,4 @@
+-- Kong Log Google Plugin
 local basic_serializer = require "kong.plugins.log-serializers.basic"
 local BatchQueue = require "kong.tools.batch_queue"
 local cjson = require "cjson"
