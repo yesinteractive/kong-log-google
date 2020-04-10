@@ -1,7 +1,6 @@
 # Kong Plugin Log to Google Analytics
 
-To manually install plugin, create directory and install in /usr/local/share/lua/5.1/kong/plugins directory on Kong node
-apk add --no-cache git
+This Kong Plugin will log Kong activity to Google Analytics. Built off the Open Source Kong HTTP Logging plugin.
 
 ## Installation
 
@@ -11,7 +10,7 @@ To manually install plugin, create directory called `/usr/local/share/lua/5.1/ko
 
 Restart Kong and you're ready to go.
 
-## luarocks
+### luarocks
 
 Verify Git is installed on your Kong Node then install via luarocks:
 
