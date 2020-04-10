@@ -1,8 +1,8 @@
 package = "kong-log-google"
-version = "1.4-3"
+version = "1.4-4"
 
 source = {
-  url = "https://github.com/yesinteractive/kong-log-google.git"
+  url = "https://github.com/yesinteractive/kong-log-google"
 }
 
 description = {
