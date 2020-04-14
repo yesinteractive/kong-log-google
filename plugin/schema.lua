@@ -18,7 +18,7 @@ return {
         fields = {
           -- Describe your plugin's configuration's schema here.  
             { tid = { type = "string", default = "UA-somevalue", required = true, }, },
-            { cid = { type = "string", default = "555", required = true, }, },
+            { cid = { type = "string",  default = "555", required = true, }, },
       },
     },
   },

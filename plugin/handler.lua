@@ -5,6 +5,7 @@ local cjson = require "cjson"
 local url = require "socket.url"
 local http = require "resty.http"
 
+
 local cjson_encode = cjson.encode
 local ngx_encode_base64 = ngx.encode_base64
 local table_concat = table.concat
@@ -52,7 +53,7 @@ end
 -- Sends the provided payload (a string) to the configured plugin host
 -- @return true if everything was sent correctly, falsy if error
 -- @return error message if there was an error
-local function send_payload(self, conf, payload)
+local function send_payload(self, conf, payload, ua, ip, getpath)
     local method = "POST"
     local timeout = 60000
     local keepalive = 60000
@@ -76,14 +77,14 @@ local function send_payload(self, conf, payload)
             return nil, "failed to do SSL handshake with " .. host .. ":" .. tostring(port) .. ": " .. err
         end
     end
-
+    local bodyis = "v=1&t=pageview&tid="..conf.tid .. "&cid=" .. conf.cid .. "&dp=/" .. getpath .. "&ua=" .. ua .. "&uip=" .. ip
     local res, err =
         httpc:request(
         {
             method = "POST",
             path = "/collect",
-            body = "v=1&t=pageview&tid=" ..
-                conf.tid .. "&cid=" .. conf.cid .. "&dp=/" .. getpath .. "&ua=" .. ua .. "&uip=" .. ip,
+            body = bodyis,
+            --    conf.tid .. "&cid=" .. conf.cid .. "&dp=" .. getpath .. "&ua=" .. ua .. "&uip=" .. ip,
             --   body = "v=1&t=pageview&tid="..conf.tid.."&cid="..conf.cid.."&dp="..kong.request.get_path().."&ua="..kong.request.get_header("Host").."&uip="..kong.client.get_ip(),
             headers = {
                 ["Content-Type"] = "application/x-www-form-urlencoded"
@@ -93,7 +94,7 @@ local function send_payload(self, conf, payload)
     if not res then
         return nil, "failed request to " .. host .. ":" .. tostring(port) .. ": " .. err
     end
-    kong.log.debug("request to google: " .. ua .. ip)
+    kong.log.debug("request to google: " .. bodyis .. res:read_body())
     -- always read response body, even if we discard it without using it on success
     local response_body = res:read_body()
     local success = res.status < 400
@@ -129,17 +130,13 @@ local function get_queue_id(conf)
     conf.keepalive = 60000
     conf.retry_count = 2
     conf.queue_size = 1
-    conf.flush_timeout = 2
+    conf.flush_timeout = 10
     return fmt(
-        "%s:%s:%s:%s:%s:%s",
-        conf.http_endpoint,
-        conf.method,
-        conf.content_type,
-        conf.timeout,
-        conf.keepalive,
-        conf.retry_count,
-        conf.queue_size,
-        conf.flush_timeout
+        "%s:%s",
+        conf.cid,
+        conf.tid
+
+
     )
 end
 
@@ -148,9 +145,8 @@ end
 -- #### ACCESS PHASE
 -- #### ACCESS PHASE
 function HttpLogHandler2:access(conf)
-    getpath = kong.request.get_path()
-    ua = kong.request.get_header("User-Agent")
-    ip = kong.client.get_ip()
+    
+
 end
 
 -- #### LOG PHASE
@@ -159,7 +155,9 @@ end
 -- #### LOG PHASE
 function HttpLogHandler2:log(conf)
     local entry = cjson_encode(basic_serializer.serialize(ngx))
-
+    local ua = kong.request.get_header("User-Agent")
+    local ip = kong.client.get_ip()
+    local getpath = kong.request.get_path()
     local queue_id = get_queue_id(conf)
     local q = queues[queue_id]
     if not q then
@@ -167,7 +165,7 @@ function HttpLogHandler2:log(conf)
         local batch_max_size = conf.queue_size or 1
         local process = function(entries)
             local payload = batch_max_size == 1 and entries[1] or json_array_concat(entries)
-            return send_payload(self, conf, payload)
+            return send_payload(self, conf, payload, ua, ip, getpath)
         end
 
         local opts = {
