@@ -2,7 +2,7 @@
 
 
 return {
-  name = "yes-log-google",
+  name = "kong-log-google",
   fields = {
     {
       -- this plugin will only be applied to Services or Routes
