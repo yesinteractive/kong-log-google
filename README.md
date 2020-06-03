@@ -26,7 +26,7 @@ You can add the plugin on a service by executing the following request against t
 
 <pre>
 $ curl -X POST http://kong:8001/services/SERVICE_NAME_OR_ID/plugins \
-    --data "name=log-google" \
+    --data "name=kong-log-google" \
     --data "config.cid=555" \
     --data "config.tid=trackerid"
 </pre>
